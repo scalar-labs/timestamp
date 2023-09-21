@@ -1,0 +1,42 @@
+name: Generate a timestamp
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+jobs:
+  generate-timestamp:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout scalar-licensing repo
+        uses: actions/checkout@v3
+        with:
+          repository: scalar-labs/scalar-licensing
+          token: ${{ secrets.TIMESTAMP_GH_PAT }}
+
+      - name: Setup and execute Gradle 'installDist' task
+        uses: gradle/gradle-build-action@v2
+        with:
+          arguments: installDist
+
+      - name: Generate a timestamp
+        run: |
+          echo "${{ secrets.PRIVATE_KEY_PEM }}" > $HOME/private-key.pem
+          lib/build/install/lib/bin/generate-signed-timestamp --private-key-file=$HOME/private-key.pem > $HOME/timestamp.json
+
+      - name: Checkout this repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.TIMESTAMP_GH_PAT }}
+
+      - name: Commit the timestamp
+        run: |
+          cp $HOME/timestamp.json .
+          git config user.name github-actions
+          git config user.email action@github.com
+          git add .
+          git commit -m "Update the timestamp"
+          git push
+
