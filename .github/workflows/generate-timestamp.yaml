@@ -1,4 +1,4 @@
-name: Generate a timestamp
+name: Generate a signed timestamp
 
 on:
   workflow_dispatch:
@@ -21,7 +21,7 @@ jobs:
         with:
           arguments: installDist
 
-      - name: Generate a timestamp
+      - name: Generate a signed timestamp
         run: |
           echo "${{ secrets.PRIVATE_KEY_PEM }}" > $HOME/private-key.pem
           lib/build/install/lib/bin/generate-signed-timestamp --private-key-file=$HOME/private-key.pem > $HOME/timestamp.json
